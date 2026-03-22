@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { prisma } from '../utils/db.js';
-import { requireAuth } from '../utils/authMiddleware.js';
+import { prisma } from '../utils/db';
+import { requireAuth } from '../utils/authMiddleware';
 
 const router = Router();
 router.use(requireAuth);
@@ -41,16 +41,16 @@ router.post('/', async (req, res) => {
   try {
     const { title, type, theme, objective, competence, hasFinancialImpact, estimatedImpact, justification, municipalityId } = req.body;
     const userId = (req as any).user.userId;
-    
+
     let munId = municipalityId;
     if (!munId) {
-       const mun = await prisma.municipality.findFirst();
-       if (!mun) {
-          const newMun = await prisma.municipality.create({ data: { name: 'Nova Veneza', state: 'SC' }});
-          munId = newMun.id;
-       } else {
-          munId = mun.id;
-       }
+      const mun = await prisma.municipality.findFirst();
+      if (!mun) {
+        const newMun = await prisma.municipality.create({ data: { name: 'Nova Veneza', state: 'SC' } });
+        munId = newMun.id;
+      } else {
+        munId = mun.id;
+      }
     }
 
     const proposal = await prisma.proposal.create({
@@ -90,12 +90,12 @@ router.put('/:id', async (req, res) => {
       where: { id },
       data: { title, type, theme, objective, competence, hasFinancialImpact, estimatedImpact, justification, content, status }
     });
-    
+
     await prisma.proposalVersion.create({
       data: {
-         proposalId: proposal.id,
-         content: proposal.content || '{}',
-         versionNumber: (await prisma.proposalVersion.count({ where: { proposalId: proposal.id } })) + 1
+        proposalId: proposal.id,
+        content: proposal.content || '{}',
+        versionNumber: (await prisma.proposalVersion.count({ where: { proposalId: proposal.id } })) + 1
       }
     });
 
