@@ -11,30 +11,30 @@ const Layout = ({ selectedMunicipality }) => {
   ]
 
   return (
-    <div className="min-h-screen flex bg-veneza-50">
+    <div className="min-h-screen flex bg-primary-50 print:block print:bg-white">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-veneza-200 flex flex-col shadow-lg">
+      <aside className="w-64 bg-white border-r border-primary-200 flex flex-col shadow-lg print:hidden">
         {/* Logo/Brand */}
-        <div className="p-6 border-b border-veneza-100">
+        <div className="p-6 border-b border-primary-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-veneza-600 to-veneza-800 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-800 rounded-lg flex items-center justify-center">
               <Scale className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="text-xl font-display font-bold text-veneza-800">
+              <h1 className="text-xl font-display font-bold text-primary-800">
                 LegislaApp
               </h1>
-              <p className="text-xs text-veneza-500">Assistente Legislativo</p>
+              <p className="text-xs text-primary-500">Assistente Legislativo</p>
             </div>
           </div>
         </div>
 
         {/* Municipality Info */}
         {selectedMunicipality && (
-          <div className="p-4 mx-4 mt-4 bg-veneza-50 rounded-lg border border-veneza-200">
-            <p className="text-xs text-veneza-600 font-medium mb-1">Município</p>
-            <p className="text-sm font-semibold text-veneza-800">{selectedMunicipality.name}</p>
-            <p className="text-xs text-veneza-500">{selectedMunicipality.state}</p>
+          <div className="p-4 mx-4 mt-4 bg-primary-50 rounded-lg border border-primary-200">
+            <p className="text-xs text-primary-600 font-medium mb-1">Município</p>
+            <p className="text-sm font-semibold text-primary-800">{selectedMunicipality.name}</p>
+            <p className="text-xs text-primary-500">{selectedMunicipality.state}</p>
           </div>
         )}
 
@@ -51,8 +51,8 @@ const Layout = ({ selectedMunicipality }) => {
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
                   ${isActive 
-                    ? 'bg-veneza-600 text-white shadow-md' 
-                    : 'text-veneza-600 hover:bg-veneza-100'
+                    ? 'bg-primary-600 text-white shadow-md' 
+                    : 'text-primary-600 hover:bg-primary-100'
                   }
                 `}
               >
@@ -64,8 +64,8 @@ const Layout = ({ selectedMunicipality }) => {
         </nav>
 
         {/* Bottom Actions */}
-        <div className="p-4 border-t border-veneza-100 space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-veneza-600 hover:bg-veneza-100 rounded-lg transition-all duration-200">
+        <div className="p-4 border-t border-primary-100 space-y-2">
+          <button className="w-full flex items-center gap-3 px-4 py-3 text-primary-600 hover:bg-primary-100 rounded-lg transition-all duration-200">
             <Settings size={20} />
             <span className="font-medium">Configurações</span>
           </button>
@@ -77,7 +77,7 @@ const Layout = ({ selectedMunicipality }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto print:overflow-visible">
         <Outlet />
       </main>
     </div>

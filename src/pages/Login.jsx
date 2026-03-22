@@ -1,15 +1,32 @@
 import { useState } from 'react'
 import { Scale, Mail, Lock, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { api } from '../utils/api.js'
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Simulate login - in production, call API
-    onLogin()
+    setLoading(true)
+    setError('')
+    try {
+      const data = await api.post('/auth/login', { email, password })
+      onLogin(data.token)
+    } catch (err) {
+      // Falha ao logar - se não tem usuário vamos tentar registrar para o MVP
+      try {
+         const data = await api.post('/auth/register', { email, password, name: 'Usuário Teste' })
+         onLogin(data.token)
+      } catch (err2) {
+         setError(err.message)
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -19,7 +36,7 @@ const Login = ({ onLogin }) => {
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-veneza-700 via-veneza-600 to-veneza-800 p-12 flex-col justify-between relative overflow-hidden"
+        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 p-12 flex-col justify-between relative overflow-hidden"
       >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
@@ -34,7 +51,7 @@ const Login = ({ onLogin }) => {
             </div>
             <div>
               <h1 className="text-3xl font-display font-bold text-white">LegislaApp</h1>
-              <p className="text-veneza-200">Assistente Legislativo Municipal</p>
+              <p className="text-primary-200">Assistente Legislativo Municipal</p>
             </div>
           </div>
 
@@ -42,7 +59,7 @@ const Login = ({ onLogin }) => {
             <h2 className="text-4xl font-display font-bold leading-tight">
               Democratizando a técnica legislativa
             </h2>
-            <p className="text-lg text-veneza-100">
+            <p className="text-lg text-primary-100">
               Sistema inteligente para elaboração de propostas legislativas municipais 
               com conformidade normativa e rastreabilidade completa.
             </p>
@@ -70,35 +87,41 @@ const Login = ({ onLogin }) => {
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
-        className="flex-1 flex items-center justify-center p-8 bg-veneza-50"
+        className="flex-1 flex items-center justify-center p-8 bg-primary-50"
       >
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-gradient-to-br from-veneza-600 to-veneza-800 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-800 rounded-xl flex items-center justify-center">
               <Scale className="text-white" size={28} />
             </div>
             <div>
-              <h1 className="text-2xl font-display font-bold text-veneza-800">LegislaApp</h1>
-              <p className="text-sm text-veneza-600">Assistente Legislativo</p>
+              <h1 className="text-2xl font-display font-bold text-primary-800">LegislaApp</h1>
+              <p className="text-sm text-primary-600">Assistente Legislativo</p>
             </div>
           </div>
 
           <div className="card p-8">
-            <h2 className="text-2xl font-display font-bold text-veneza-800 mb-2">
+            <h2 className="text-2xl font-display font-bold text-primary-800 mb-2">
               Bem-vindo de volta
             </h2>
-            <p className="text-veneza-600 mb-8">
+            <p className="text-primary-600 mb-6">
               Entre com suas credenciais para acessar o sistema
             </p>
 
+            {error && (
+              <div className="p-3 mb-6 bg-rosso-50 border border-rosso-200 text-rosso-700 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-veneza-700 mb-2">
+                <label className="block text-sm font-medium text-primary-700 mb-2">
                   E-mail
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-veneza-400" size={20} />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary-400" size={20} />
                   <input
                     type="email"
                     value={email}
@@ -111,11 +134,11 @@ const Login = ({ onLogin }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-veneza-700 mb-2">
+                <label className="block text-sm font-medium text-primary-700 mb-2">
                   Senha
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-veneza-400" size={20} />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary-400" size={20} />
                   <input
                     type="password"
                     value={password}
@@ -129,31 +152,31 @@ const Login = ({ onLogin }) => {
 
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" className="w-4 h-4 text-veneza-600 rounded" />
-                  <span className="text-sm text-veneza-600">Lembrar-me</span>
+                  <input type="checkbox" className="w-4 h-4 text-primary-600 rounded" />
+                  <span className="text-sm text-primary-600">Lembrar-me</span>
                 </label>
-                <a href="#" className="text-sm text-veneza-600 hover:text-veneza-800 font-medium">
+                <a href="#" className="text-sm text-primary-600 hover:text-primary-800 font-medium">
                   Esqueceu a senha?
                 </a>
               </div>
 
-              <button type="submit" className="w-full btn-primary flex items-center justify-center gap-2">
-                <span>Entrar</span>
+              <button type="submit" disabled={loading} className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50">
+                <span>{loading ? 'Aguarde...' : 'Entrar / Registrar'}</span>
                 <ArrowRight size={20} />
               </button>
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-veneza-600">
+              <p className="text-sm text-primary-600">
                 Não tem uma conta?{' '}
-                <a href="#" className="font-medium text-veneza-700 hover:text-veneza-800">
+                <a href="#" className="font-medium text-primary-700 hover:text-primary-800">
                   Solicitar acesso
                 </a>
               </p>
             </div>
           </div>
 
-          <p className="text-center text-xs text-veneza-500 mt-8">
+          <p className="text-center text-xs text-primary-500 mt-8">
             Versão 1.0 • Sistema em conformidade com LGPD
           </p>
         </div>

@@ -8,8 +8,13 @@ import CreateProposal from './pages/CreateProposal'
 import ProposalEditor from './pages/ProposalEditor'
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'))
   const [selectedMunicipality, setSelectedMunicipality] = useState(null)
+
+  const handleLogin = (token) => {
+    localStorage.setItem('token', token)
+    setIsAuthenticated(true)
+  }
 
   return (
     <Router>
@@ -19,7 +24,7 @@ function App() {
           element={
             isAuthenticated ? 
               <Navigate to="/dashboard" /> : 
-              <Login onLogin={() => setIsAuthenticated(true)} />
+              <Login onLogin={handleLogin} />
           } 
         />
         

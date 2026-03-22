@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  proposals Proposal[]
+}
+
+model Municipality {
+  id        String   @id @default(uuid())
+  name      String
+  state     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  proposals Proposal[]
+}
+
+model Proposal {
+  id                 String   @id @default(uuid())
+  title              String   @default("Nova Proposição")
+  type               String
+  theme              String?
+  objective          String?
+  competence         String?
+  hasFinancialImpact Boolean?
+  estimatedImpact    String?
+  justification      String?
+  content            String   @default("{}")
+  status             String   @default("DRAFT")
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  municipalityId     String
+  municipality       Municipality @relation(fields: [municipalityId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  versions           ProposalVersion[]
+}
+
+model ProposalVersion {
+  id            String   @id @default(uuid())
+  proposalId    String
+  proposal      Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  content       String
+  versionNumber Int
+  createdAt     DateTime @default(now())
+}

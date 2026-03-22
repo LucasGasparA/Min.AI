@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-veneza-50 text-veneza-900 font-body antialiased;
+    @apply bg-primary-50 text-primary-900 font-body antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -14,37 +14,37 @@
 
 @layer components {
   .btn-primary {
-    @apply px-6 py-3 bg-veneza-600 text-white font-medium rounded-lg 
-           hover:bg-veneza-700 transition-all duration-200 
+    @apply px-6 py-3 bg-primary-600 text-white font-medium rounded-lg 
+           hover:bg-primary-700 transition-all duration-200 
            shadow-md hover:shadow-lg active:scale-95;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 bg-white text-veneza-700 font-medium rounded-lg 
-           border-2 border-veneza-300 hover:border-veneza-500 
+    @apply px-6 py-3 bg-white text-primary-700 font-medium rounded-lg 
+           border-2 border-primary-300 hover:border-primary-500 
            transition-all duration-200 hover:shadow-md active:scale-95;
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-lg border border-veneza-100 
+    @apply bg-white rounded-xl shadow-lg border border-primary-100 
            transition-all duration-300 hover:shadow-xl;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 border-2 border-veneza-200 rounded-lg 
-           focus:border-veneza-500 focus:outline-none focus:ring-2 
-           focus:ring-veneza-200 transition-all duration-200;
+    @apply w-full px-4 py-3 border-2 border-primary-200 rounded-lg 
+           focus:border-primary-500 focus:outline-none focus:ring-2 
+           focus:ring-primary-200 transition-all duration-200;
   }
 
   .section-title {
-    @apply text-3xl font-display font-bold text-veneza-800 mb-6 
+    @apply text-3xl font-display font-bold text-primary-800 mb-6 
            border-l-4 border-oro-500 pl-4;
   }
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-veneza-600 to-veneza-800 
+    @apply bg-gradient-to-r from-primary-600 to-primary-800 
            bg-clip-text text-transparent;
   }
 

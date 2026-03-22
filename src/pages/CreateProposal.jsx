@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FileText, ArrowRight, ArrowLeft, Check, Scale, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { api } from '../utils/api.js'
 
 const CreateProposal = () => {
   const navigate = useNavigate()
@@ -84,14 +85,17 @@ const CreateProposal = () => {
     }
   }
 
-  const handleFinish = () => {
-    // Simulate creating proposal and navigating to editor
-    const proposalId = 'temp-' + Date.now()
-    navigate(`/proposal/${proposalId}/edit`)
+  const handleFinish = async () => {
+    try {
+      const data = await api.post('/proposals', formData)
+      navigate(`/proposal/${data.id}/edit`)
+    } catch (e) {
+      alert('Erro ao criar proposição: ' + e.message)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-veneza-50 via-white to-oro-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-oro-50 p-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <motion.div
@@ -99,11 +103,11 @@ const CreateProposal = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-display font-bold text-veneza-800 mb-2 flex items-center gap-3">
-            <FileText className="text-veneza-600" size={40} />
+          <h1 className="text-4xl font-display font-bold text-primary-800 mb-2 flex items-center gap-3">
+            <FileText className="text-primary-600" size={40} />
             Nova Proposição Legislativa
           </h1>
-          <p className="text-veneza-600">
+          <p className="text-primary-600">
             Wizard guiado com assistência jurídica inteligente
           </p>
         </motion.div>
@@ -123,17 +127,17 @@ const CreateProposal = () => {
                     className={`
                       w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300
                       ${index < currentStep
-                        ? 'bg-veneza-600 text-white'
+                        ? 'bg-primary-600 text-white'
                         : index === currentStep
-                          ? 'bg-veneza-500 text-white ring-4 ring-veneza-200'
-                          : 'bg-veneza-100 text-veneza-400'
+                          ? 'bg-primary-500 text-white ring-4 ring-primary-200'
+                          : 'bg-primary-100 text-primary-400'
                       }
                     `}
                   >
                     {index < currentStep ? <Check size={20} /> : index + 1}
                   </div>
                   <div className="mt-2 text-center hidden lg:block">
-                    <p className={`text-xs font-medium ${index <= currentStep ? 'text-veneza-700' : 'text-veneza-400'
+                    <p className={`text-xs font-medium ${index <= currentStep ? 'text-primary-700' : 'text-primary-400'
                       }`}>
                       {step.title}
                     </p>
@@ -143,7 +147,7 @@ const CreateProposal = () => {
                   <div
                     className={`
                       h-1 flex-1 mx-2 transition-all duration-300
-                      ${index < currentStep ? 'bg-veneza-600' : 'bg-veneza-200'}
+                      ${index < currentStep ? 'bg-primary-600' : 'bg-primary-200'}
                     `}
                   />
                 )}
@@ -162,38 +166,39 @@ const CreateProposal = () => {
             transition={{ duration: 0.3 }}
             className="card p-8 mb-6"
           >
-            <h2 className="text-2xl font-display font-bold text-veneza-800 mb-2">
+            <h2 className="text-2xl font-display font-bold text-primary-800 mb-2">
               {steps[currentStep].title}
             </h2>
-            <p className="text-veneza-600 mb-6">{steps[currentStep].description}</p>
+            <p className="text-primary-600 mb-6">{steps[currentStep].description}</p>
 
             {/* Step 0: Type Selection */}
             {currentStep === 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {proposalTypes.map((type) => (
-                  <div
+                  <button
                     key={type.value}
+                    type="button"
                     onClick={() => updateFormData('type', type.value)}
                     className={`
-                      p-6 border-2 rounded-lg cursor-pointer transition-all duration-200
+                      text-left w-full p-6 border-2 rounded-lg cursor-pointer transition-all duration-200
                       ${formData.type === type.value
-                        ? 'border-veneza-500 bg-veneza-50 shadow-lg'
-                        : 'border-veneza-200 hover:border-veneza-400 hover:shadow-md'
+                        ? 'border-primary-500 bg-primary-50 shadow-lg'
+                        : 'border-primary-200 hover:border-primary-400 hover:shadow-md'
                       }
                     `}
                   >
                     <div className="text-4xl mb-3">{type.icon}</div>
-                    <h3 className="font-display font-bold text-veneza-800 mb-2">
+                    <h3 className="font-display font-bold text-primary-800 mb-2">
                       {type.label}
                     </h3>
-                    <p className="text-sm text-veneza-600">{type.description}</p>
+                    <p className="text-sm text-primary-600">{type.description}</p>
                     {formData.type === type.value && (
-                      <div className="mt-3 flex items-center gap-2 text-veneza-600">
+                      <div className="mt-3 flex items-center gap-2 text-primary-600">
                         <Check size={16} />
                         <span className="text-sm font-medium">Selecionado</span>
                       </div>
                     )}
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -202,7 +207,7 @@ const CreateProposal = () => {
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-veneza-700 mb-2">
+                  <label className="block text-sm font-medium text-primary-700 mb-2">
                     Tema da Proposição
                   </label>
                   <input
@@ -215,7 +220,7 @@ const CreateProposal = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-veneza-700 mb-2">
+                  <label className="block text-sm font-medium text-primary-700 mb-2">
                     Objetivo Principal
                   </label>
                   <textarea
@@ -226,14 +231,14 @@ const CreateProposal = () => {
                   />
                 </div>
 
-                <div className="bg-veneza-50 border border-veneza-200 rounded-lg p-4">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                   <div className="flex items-start gap-3">
-                    <Scale className="text-veneza-600 mt-1" size={20} />
+                    <Scale className="text-primary-600 mt-1" size={20} />
                     <div>
-                      <p className="text-sm font-medium text-veneza-800 mb-1">
+                      <p className="text-sm font-medium text-primary-800 mb-1">
                         Dica do Assistente Jurídico
                       </p>
-                      <p className="text-sm text-veneza-700">
+                      <p className="text-sm text-primary-700">
                         Seja específico sobre o que deseja alcançar. Objetivos claros facilitam
                         a análise de competência e a redação da minuta.
                       </p>
@@ -247,24 +252,25 @@ const CreateProposal = () => {
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-veneza-700 mb-2">
+                  <label className="block text-sm font-medium text-primary-700 mb-2">
                     A matéria é de competência municipal?
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {['Sim, exclusiva', 'Sim, concorrente', 'Não tenho certeza'].map((option) => (
-                      <div
+                      <button
                         key={option}
+                        type="button"
                         onClick={() => updateFormData('competence', option)}
                         className={`
-                          p-4 border-2 rounded-lg cursor-pointer transition-all duration-200
+                          text-left w-full p-4 border-2 rounded-lg cursor-pointer transition-all duration-200
                           ${formData.competence === option
-                            ? 'border-veneza-500 bg-veneza-50'
-                            : 'border-veneza-200 hover:border-veneza-400'
+                            ? 'border-primary-500 bg-primary-50'
+                            : 'border-primary-200 hover:border-primary-400'
                           }
                         `}
                       >
-                        <p className="font-medium text-veneza-800">{option}</p>
-                      </div>
+                        <p className="font-medium text-primary-800">{option}</p>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -293,46 +299,48 @@ const CreateProposal = () => {
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-veneza-700 mb-2">
+                  <label className="block text-sm font-medium text-primary-700 mb-2">
                     Esta proposição tem impacto orçamentário?
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div
+                    <button
+                      type="button"
                       onClick={() => updateFormData('hasFinancialImpact', true)}
                       className={`
-                        p-6 border-2 rounded-lg cursor-pointer transition-all duration-200
+                        text-left w-full p-6 border-2 rounded-lg cursor-pointer transition-all duration-200
                         ${formData.hasFinancialImpact === true
-                          ? 'border-veneza-500 bg-veneza-50'
-                          : 'border-veneza-200 hover:border-veneza-400'
+                          ? 'border-primary-500 bg-primary-50'
+                          : 'border-primary-200 hover:border-primary-400'
                         }
                       `}
                     >
-                      <h3 className="font-display font-bold text-veneza-800 mb-2">Sim</h3>
-                      <p className="text-sm text-veneza-600">
+                      <h3 className="font-display font-bold text-primary-800 mb-2">Sim</h3>
+                      <p className="text-sm text-primary-600">
                         Gera despesas ou afeta receitas municipais
                       </p>
-                    </div>
-                    <div
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => updateFormData('hasFinancialImpact', false)}
                       className={`
-                        p-6 border-2 rounded-lg cursor-pointer transition-all duration-200
+                        text-left w-full p-6 border-2 rounded-lg cursor-pointer transition-all duration-200
                         ${formData.hasFinancialImpact === false
-                          ? 'border-veneza-500 bg-veneza-50'
-                          : 'border-veneza-200 hover:border-veneza-400'
+                          ? 'border-primary-500 bg-primary-50'
+                          : 'border-primary-200 hover:border-primary-400'
                         }
                       `}
                     >
-                      <h3 className="font-display font-bold text-veneza-800 mb-2">Não</h3>
-                      <p className="text-sm text-veneza-600">
+                      <h3 className="font-display font-bold text-primary-800 mb-2">Não</h3>
+                      <p className="text-sm text-primary-600">
                         Não gera impacto financeiro direto
                       </p>
-                    </div>
+                    </button>
                   </div>
                 </div>
 
                 {formData.hasFinancialImpact && (
                   <div>
-                    <label className="block text-sm font-medium text-veneza-700 mb-2">
+                    <label className="block text-sm font-medium text-primary-700 mb-2">
                       Estimativa de Impacto (R$)
                     </label>
                     <input
@@ -342,7 +350,7 @@ const CreateProposal = () => {
                       className="input-field"
                       placeholder="Ex: 150.000,00"
                     />
-                    <p className="text-xs text-veneza-500 mt-2">
+                    <p className="text-xs text-primary-500 mt-2">
                       Será necessário anexar estimativa de impacto orçamentário-financeiro
                     </p>
                   </div>
@@ -354,7 +362,7 @@ const CreateProposal = () => {
             {currentStep === 4 && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-veneza-700 mb-2">
+                  <label className="block text-sm font-medium text-primary-700 mb-2">
                     Justificativa da Proposição
                   </label>
                   <textarea
@@ -363,19 +371,19 @@ const CreateProposal = () => {
                     className="input-field min-h-[200px]"
                     placeholder="Fundamente a necessidade e relevância desta proposição..."
                   />
-                  <p className="text-xs text-veneza-500 mt-2">
+                  <p className="text-xs text-primary-500 mt-2">
                     Mínimo 50 caracteres • {formData.justification.length}/50
                   </p>
                 </div>
 
-                <div className="bg-veneza-50 border border-veneza-200 rounded-lg p-4">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                   <div className="flex items-start gap-3">
-                    <Scale className="text-veneza-600 mt-1" size={20} />
+                    <Scale className="text-primary-600 mt-1" size={20} />
                     <div>
-                      <p className="text-sm font-medium text-veneza-800 mb-1">
+                      <p className="text-sm font-medium text-primary-800 mb-1">
                         O assistente irá enriquecer sua justificativa
                       </p>
-                      <p className="text-sm text-veneza-700">
+                      <p className="text-sm text-primary-700">
                         Com base nas normas locais e boas práticas legislativas, o sistema
                         sugerirá melhorias e citações relevantes para fortalecer sua argumentação.
                       </p>
@@ -395,8 +403,8 @@ const CreateProposal = () => {
             className={`
               flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200
               ${currentStep === 0
-                ? 'bg-veneza-100 text-veneza-400 cursor-not-allowed'
-                : 'bg-white border-2 border-veneza-300 text-veneza-700 hover:border-veneza-500 hover:shadow-md'
+                ? 'bg-primary-100 text-primary-400 cursor-not-allowed'
+                : 'bg-white border-2 border-primary-300 text-primary-700 hover:border-primary-500 hover:shadow-md'
               }
             `}
           >
@@ -404,7 +412,7 @@ const CreateProposal = () => {
             <span>Anterior</span>
           </button>
 
-          <div className="text-sm text-veneza-600">
+          <div className="text-sm text-primary-600">
             Passo {currentStep + 1} de {steps.length}
           </div>
 
@@ -415,8 +423,8 @@ const CreateProposal = () => {
               className={`
                 flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200
                 ${canProceed()
-                  ? 'bg-veneza-600 text-white hover:bg-veneza-700 shadow-md hover:shadow-lg'
-                  : 'bg-veneza-200 text-veneza-400 cursor-not-allowed'
+                  ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg'
+                  : 'bg-primary-200 text-primary-400 cursor-not-allowed'
                 }
               `}
             >
@@ -430,8 +438,8 @@ const CreateProposal = () => {
               className={`
                 flex items-center gap-2 px-8 py-3 rounded-lg font-bold transition-all duration-200
                 ${canProceed()
-                  ? 'bg-gradient-to-r from-veneza-600 to-veneza-700 text-white hover:from-veneza-700 hover:to-veneza-800 shadow-lg hover:shadow-xl'
-                  : 'bg-veneza-200 text-veneza-400 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 shadow-lg hover:shadow-xl'
+                  : 'bg-primary-200 text-primary-400 cursor-not-allowed'
                 }
               `}
             >
