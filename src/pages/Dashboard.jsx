@@ -1,86 +1,73 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { FileText, Clock, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import StatCard from '../components/StatCard'
 import ProposalList from '../components/ProposalList'
+import { api } from '../utils/api.js'
+
+const TYPE_LABELS = {
+  pl_ordinaria: 'Projeto de Lei Ordinária',
+  pl_complementar: 'Projeto de Lei Complementar',
+  decreto: 'Decreto Municipal',
+  indicacao: 'Indicação',
+}
+
+const STATUS_MAP = {
+  DRAFT: 'em_andamento',
+  REVIEW: 'pendente_revisao',
+  APPROVED: 'concluido',
+}
+
+function buildStats(proposals) {
+  const total = proposals.length
+  const inProgress = proposals.filter(p => p.status === 'DRAFT').length
+  const completed = proposals.filter(p => p.status === 'APPROVED').length
+  const pending = proposals.filter(p => p.status === 'REVIEW').length
+  const approvalRate = total > 0 ? Math.round((completed / total) * 100) : 0
+
+  return [
+    { label: 'Em Andamento', value: String(inProgress), icon: Clock, color: 'bg-blue-500', trend: `${total} total` },
+    { label: 'Concluídas', value: String(completed), icon: CheckCircle, color: 'bg-green-500', trend: 'aprovadas' },
+    { label: 'Pendentes de Revisão', value: String(pending), icon: AlertTriangle, color: 'bg-amber-500', trend: pending > 0 ? 'Requer atenção' : 'Nenhuma pendente' },
+    { label: 'Taxa de Aprovação', value: `${approvalRate}%`, icon: TrendingUp, color: 'bg-primary-600', trend: `${total} proposições` },
+  ]
+}
+
+function toListItem(p) {
+  return {
+    id: p.id,
+    title: p.title,
+    type: TYPE_LABELS[p.type] || p.type,
+    status: STATUS_MAP[p.status] || 'em_andamento',
+    lastUpdate: new Date(p.updatedAt).toLocaleDateString('pt-BR'),
+    progress: p.status === 'APPROVED' ? 100 : p.status === 'REVIEW' ? 80 : 30,
+  }
+}
 
 const Dashboard = () => {
-  const stats = [
-    { 
-      label: 'Proposições em Andamento', 
-      value: '8', 
-      icon: Clock,
-      color: 'bg-blue-500',
-      trend: '+2 esta semana'
-    },
-    { 
-      label: 'Concluídas', 
-      value: '23', 
-      icon: CheckCircle,
-      color: 'bg-green-500',
-      trend: '+5 este mês'
-    },
-    { 
-      label: 'Pendentes de Revisão', 
-      value: '3', 
-      icon: AlertTriangle,
-      color: 'bg-amber-500',
-      trend: 'Requer atenção'
-    },
-    { 
-      label: 'Taxa de Aprovação', 
-      value: '87%', 
-      icon: TrendingUp,
-      color: 'bg-primary-600',
-      trend: '+12% vs mês anterior'
-    },
-  ]
+  const [stats, setStats] = useState(buildStats([]))
+  const [recentProposals, setRecentProposals] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const recentProposals = [
-    {
-      id: 1,
-      title: 'Projeto de Lei Ordinária - Criação de Programa de Coleta Seletiva',
-      type: 'Projeto de Lei Ordinária',
-      status: 'em_andamento',
-      lastUpdate: '2 dias atrás',
-      progress: 65
-    },
-    {
-      id: 2,
-      title: 'Decreto Municipal - Regulamentação do Horário Comercial',
-      type: 'Decreto',
-      status: 'pendente_revisao',
-      lastUpdate: '5 dias atrás',
-      progress: 90
-    },
-    {
-      id: 3,
-      title: 'Indicação - Melhoria na Iluminação Pública do Bairro Centro',
-      type: 'Indicação',
-      status: 'concluido',
-      lastUpdate: '1 semana atrás',
-      progress: 100
-    },
-  ]
+  useEffect(() => {
+    api.get('/proposals?limit=50')
+      .then(({ proposals }) => {
+        setStats(buildStats(proposals))
+        setRecentProposals(proposals.slice(0, 5).map(toListItem))
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
 
   return (
     <div className="p-8">
-      {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
-        <h1 className="text-4xl font-display font-bold text-primary-800 mb-2">
-          Dashboard
-        </h1>
-        <p className="text-primary-600">
-          Visão geral das suas proposições legislativas
-        </p>
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+        <h1 className="text-4xl font-display font-bold text-primary-800 mb-2">Dashboard</h1>
+        <p className="text-primary-600">Visão geral das suas proposições legislativas</p>
       </motion.div>
 
-      {/* Stats Grid */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -91,25 +78,25 @@ const Dashboard = () => {
         ))}
       </motion.div>
 
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Proposals */}
-        <ProposalList proposals={recentProposals} />
+        <div className="lg:col-span-2">
+          {loading ? (
+            <div className="card p-6 text-primary-500 text-center">Carregando proposições...</div>
+          ) : (
+            <ProposalList proposals={recentProposals} />
+          )}
+        </div>
 
-        {/* Quick Actions */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
           className="space-y-6"
         >
           <div className="card p-6">
-            <h2 className="text-xl font-display font-bold text-primary-800 mb-4">
-              Ações Rápidas
-            </h2>
-            
+            <h2 className="text-xl font-display font-bold text-primary-800 mb-4">Ações Rápidas</h2>
             <div className="space-y-3">
-              <Link 
+              <Link
                 to="/create-proposal"
                 className="block p-4 border-2 border-primary-200 rounded-lg hover:border-primary-500 hover:shadow-md transition-all duration-200"
               >
@@ -131,20 +118,19 @@ const Dashboard = () => {
                   </div>
                   <div className="text-left">
                     <p className="font-semibold text-primary-800">Revisar Pendências</p>
-                    <p className="text-xs text-primary-600">3 proposições aguardam</p>
+                    <p className="text-xs text-primary-600">
+                      {stats[2]?.value !== '0' ? `${stats[2]?.value} proposições aguardam` : 'Nenhuma pendente'}
+                    </p>
                   </div>
                 </div>
               </button>
             </div>
           </div>
 
-          {/* Tips */}
           <div className="card p-6 bg-gradient-to-br from-primary-50 to-oro-50">
-            <h3 className="font-display font-bold text-primary-800 mb-3">
-              💡 Dica do Sistema
-            </h3>
+            <h3 className="font-display font-bold text-primary-800 mb-3">Dica do Sistema</h3>
             <p className="text-sm text-primary-700 leading-relaxed">
-              Sempre consulte a Lei Orgânica do Município antes de iniciar uma nova proposição. 
+              Sempre consulte a Lei Orgânica do Município antes de iniciar uma nova proposição.
               O assistente jurídico pode ajudar a identificar competências e requisitos formais.
             </p>
           </div>

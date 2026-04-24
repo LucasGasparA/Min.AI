@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(64\\).toString\\('base64'\\)\\)\")",
+      "Bash(npm run *)"
+    ]
+  }
+}

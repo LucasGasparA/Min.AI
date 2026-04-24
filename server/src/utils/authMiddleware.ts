@@ -1,22 +1,27 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-mvp';
+export interface AuthRequest extends Request {
+  user: { userId: string; role: string };
+}
 
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
+  const JWT_SECRET = process.env.JWT_SECRET!;
+
+  const token =
+    req.cookies?.token ||
+    (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
+
+  if (!token) {
     res.status(401).json({ error: 'Não autorizado' });
     return;
   }
 
-  const token = authHeader.split(' ')[1];
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    (req as any).user = payload;
+    const payload = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+    (req as AuthRequest).user = payload;
     next();
-  } catch (err) {
-    res.status(401).json({ error: 'Token inválido' });
-    return;
+  } catch {
+    res.status(401).json({ error: 'Token inválido ou expirado' });
   }
 };

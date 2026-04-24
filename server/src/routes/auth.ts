@@ -1,94 +1,129 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
+import { z } from 'zod';
 import { prisma } from '../utils/db.js';
+import { requireAuth, AuthRequest } from '../utils/authMiddleware.js';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-mvp';
 
-console.log('🔐 Módulo de autenticação carregado');
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// POST /api/auth/register
-router.post('/register', async (req, res) => {
+const registerSchema = z.object({
+  email: z.string().email('E-mail inválido'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').optional(),
+});
+
+const loginSchema = z.object({
+  email: z.string().email('E-mail inválido'),
+  password: z.string().min(1, 'Senha obrigatória'),
+});
+
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: 'lax' as const,
+  secure: process.env.NODE_ENV === 'production',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: '/',
+};
+
+function signToken(userId: string, role: string) {
+  return jwt.sign({ userId, role }, process.env.JWT_SECRET!, { expiresIn: '7d' });
+}
+
+router.post('/register', loginLimiter, async (req: Request, res: Response) => {
+  const parsed = registerSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
+    return;
+  }
+
+  const { email, password, name } = parsed.data;
+
   try {
-    const { email, password, name } = req.body;
-
-    console.log('📝 Tentando registrar usuário:', email);
-
-    // Verificar se já existe
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      console.log('❌ Email já cadastrado:', email);
-      return res.status(400).json({ error: 'Email já cadastrado' });
+      res.status(400).json({ error: 'E-mail já cadastrado' });
+      return;
     }
 
-    // Criar usuário
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: name || 'Usuário'
-      }
+      data: { email, password: hashedPassword, name: name || 'Usuário' },
     });
 
-    // Gerar token
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = signToken(user.id, user.role);
+    res.cookie('token', token, COOKIE_OPTIONS);
 
-    console.log('✅ Usuário registrado com sucesso:', email);
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email
-      }
-    });
-  } catch (error: any) {
+    console.log('✅ Usuário registrado:', email);
+    res.json({ user: { id: user.id, name: user.name, email: user.email } });
+  } catch (error) {
     console.error('❌ Erro ao registrar:', error);
-    res.status(500).json({ error: 'Erro no servidor: ' + error.message });
+    res.status(500).json({ error: 'Erro no servidor' });
   }
 });
 
-// POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req: Request, res: Response) => {
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
+    return;
+  }
+
+  const { email, password } = parsed.data;
+
   try {
-    const { email, password } = req.body;
-
-    console.log('🔐 Tentando fazer login:', email);
-
-    // Buscar usuário
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      console.log('❌ Usuário não encontrado:', email);
-      return res.status(401).json({ error: 'Credenciais inválidas' });
+      res.status(401).json({ error: 'Credenciais inválidas' });
+      return;
     }
 
-    // Verificar senha
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-      console.log('❌ Senha incorreta para:', email);
-      return res.status(401).json({ error: 'Credenciais inválidas' });
+      res.status(401).json({ error: 'Credenciais inválidas' });
+      return;
     }
 
-    // Gerar token
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = signToken(user.id, user.role);
+    res.cookie('token', token, COOKIE_OPTIONS);
 
-    console.log('✅ Login bem-sucedido:', email);
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email
-      }
-    });
-  } catch (error: any) {
-    console.error('❌ Erro ao fazer login:', error);
-    res.status(500).json({ error: 'Erro no servidor: ' + error.message });
+    console.log('✅ Login:', email);
+    res.json({ user: { id: user.id, name: user.name, email: user.email } });
+  } catch (error) {
+    console.error('❌ Erro ao logar:', error);
+    res.status(500).json({ error: 'Erro no servidor' });
   }
+});
+
+router.get('/me', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as AuthRequest).user.userId;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    if (!user) {
+      res.status(404).json({ error: 'Usuário não encontrado' });
+      return;
+    }
+    res.json({ user });
+  } catch {
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
+router.post('/logout', (_req: Request, res: Response) => {
+  res.clearCookie('token', { path: '/' });
+  res.json({ ok: true });
 });
 
 export default router;
